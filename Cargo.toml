@@ -1,0 +1,16 @@
+[package]
+name = "zkpot"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.90"
+candle-core = "0.7.2"
+candle-datasets = "0.7.2"
+candle-nn = "0.7.2"
+hf-hub = "0.3.2"
+image = "0.25.4"
+indicatif = "0.17.8"
+indicatif-log-bridge = "0.2.3"
+log = "0.4.22"
+parquet = "53.1.0"
