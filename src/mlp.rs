@@ -1,38 +1,25 @@
 use candle_core::{DType, Device, Result, Tensor};
 use candle_nn::{linear, Linear, Module, VarMap, VarBuilder};
 use std::path::Path;
-use log::info;
+use log::{info, warn};
 
 
-pub struct MLP<'a> {
+pub struct MLP {
     layer1: Linear,
     layer2: Linear,
     varmap: VarMap,
-    weights_path: Option<&'a str>
 }
 
 
-impl <'a> MLP<'a> {
+impl <'a> MLP {
     pub fn new(
         input_size: usize, 
         num_classes: usize, 
         hidden_size: usize, 
-        device: &Device, 
-        weights_path: Option<&'a str>, 
-        load_saved_weights: bool, 
+        device: &Device,
     ) -> Result<Self> {
-        let mut varmap = VarMap::new();
+        let varmap = VarMap::new();
         let vb = VarBuilder::from_varmap(&varmap, DType::F32, &device);
-        
-        match weights_path {
-            None => (), // do nothing here; don't want the model to save
-            Some(weights_path) => {
-                if load_saved_weights && Path::new(&weights_path).exists() { // load from the path if it exists
-                    varmap.load(weights_path)?;
-                }
-            }
-        }
-
         let fc1 = linear(input_size, hidden_size, vb.push_prefix("fc1"))?;
         let fc2 = linear(hidden_size, num_classes, vb.push_prefix("fc2"))?;
 
@@ -41,7 +28,6 @@ impl <'a> MLP<'a> {
                 layer1: fc1,
                 layer2: fc2,
                 varmap: varmap,
-                weights_path: weights_path,
             }
         );
     }
@@ -50,9 +36,23 @@ impl <'a> MLP<'a> {
         return &self.varmap;
     }
 
-    pub fn save_weights(&self) {
-        match self.weights_path {
-            None => info!("No weights path specified; saving does nothing!"),
+    pub fn load_weights(&mut self, weights_path: Option<&'a str>) {
+        match weights_path {
+            None => warn!("No weights path specified; loading does nothing!"),
+            Some(path) => {
+                if Path::new(&path).exists() { // load from the path if it exists
+                    self.varmap.load(path).unwrap();
+                    info!("Loaded weights from {}", path);
+                } else {
+                    warn!("No file exists at {}; loading will do nothing!", path);
+                }
+            }
+        }
+    }
+
+    pub fn save_weights(&self, weights_path: Option<&'a str>) {
+        match weights_path {
+            None => warn!("No weights path specified; saving does nothing!"),
             Some(path) => {
                 self.varmap.save(path).unwrap();
                 info!("Saved weights to {}", path);
@@ -62,7 +62,7 @@ impl <'a> MLP<'a> {
 }
 
 
-impl <'a> Module for MLP<'a> {
+impl <'a> Module for MLP {
     fn forward(&self, img: &Tensor) -> Result<Tensor> {
         let img = img.to_dtype(self.layer1.weight().dtype())?;
         let x = self.layer1.forward(&img)?;

@@ -3,11 +3,19 @@ use candle_nn::{ops::{*}, Module, Optimizer};
 use candle_datasets::vision::Dataset;
 use indicatif::{ProgressBar, ProgressStyle};
 use anyhow::{Ok, Result};
+use log::warn;
 
 use crate::mlp::MLP;
 
 
-pub fn train_model<'a>(model: &'a MLP<'a>, ds: &Dataset, epochs: i32, batch_size: i32, learning_rate: f64) -> Result<&'a MLP<'a>> {
+pub fn train_model<'a>(
+    model: &'a MLP, 
+    ds: &Dataset, 
+    epochs: i32, 
+    batch_size: i32, 
+    learning_rate: f64, 
+    weights_path: Option<&'a str>
+) -> Result<&'a MLP> {
     let train_imgs = &ds.train_images;
     let train_labels = &ds.train_labels;
     let num_train_imgs = train_imgs.shape().clone().into_dims()[0] as i32;
@@ -80,13 +88,18 @@ pub fn train_model<'a>(model: &'a MLP<'a>, ds: &Dataset, epochs: i32, batch_size
     }
 
     // Save the trained model
-    model.save_weights();
+    match weights_path {
+        None => warn!("No weights path specified; model is not being saved!"),
+        Some(_) => {
+            model.save_weights(weights_path);
+        }
+    }
 
     return Ok(model);
 }
 
 
-pub fn test_model<'a>(model: &MLP<'a>, ds: &Dataset, batch_size: i32) -> Result<(f32, f32)> {
+pub fn test_model<'a>(model: &MLP, ds: &Dataset, batch_size: i32) -> Result<(f32, f32)> {
     let test_imgs = &ds.test_images;
     let test_labels = &ds.test_labels;
     let num_test_imgs = test_imgs.shape().clone().into_dims()[0] as i32;
