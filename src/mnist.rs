@@ -8,8 +8,8 @@ use std::{fs::File, path::Path};
 
 pub fn init_mnist_ds() -> Result<Dataset> {
     // Read in the files
-    let train_path = Path::new("data/train-00000-of-00001.parquet");
-    let test_path = Path::new("data/test-00000-of-00001.parquet");
+    let train_path = Path::new("data/train.parquet");
+    let test_path = Path::new("data/test.parquet");
     let train_file = File::open(&train_path)?;
     let test_file = File::open(&test_path)?;
     let train_parquet = SerializedFileReader::new(train_file)?;

@@ -8,7 +8,7 @@ use mnist::init_mnist_ds;
 use model_utils::{train_model, test_model};
 
 
-const LOAD_EXISTING_WEIGHTS: bool = true;
+const LOAD_EXISTING_WEIGHTS: bool = false;
 const MODEL_WEIGHTS_PATH: Option<&str> = Some("mlp_mnist.safetensors");
 
 
